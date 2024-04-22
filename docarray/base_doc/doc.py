@@ -578,7 +578,7 @@ class BaseDocWithoutId(BaseModel, IOMixin, UpdateMixin, BaseNode):
     to_json = BaseModel.model_dump_json if is_pydantic_v2 else json
 
 
-class BaseDoc(BaseDocWithoutId):
+class BaseDoc(BaseDocWithoutId):  # LS comments: 自定义时需要继承的基类
     """
     BaseDoc is the base class for all Documents. This class should be subclassed
     to create new Document types with a specific schema.

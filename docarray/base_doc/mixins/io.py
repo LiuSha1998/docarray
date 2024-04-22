@@ -46,7 +46,9 @@ else:
     if torch is not None:
         from docarray.typing import TorchTensor
 
-T = TypeVar('T', bound='IOMixin')
+T = TypeVar(
+    'T', bound='IOMixin'
+)  # 这里定义了一个名为 T 的类型变量，它被约束为 IOMixin 类或其子类的实例。这意味着 T 可以被任何继承自 IOMixin 的类型所替换。这种约束确保了 T 不是任意类型，而是 IOMixin 类型或其子类型。
 
 
 def _type_to_protobuf(value: Any) -> 'NodeProto':
@@ -68,10 +70,13 @@ def _type_to_protobuf(value: Any) -> 'NodeProto':
 
     nested_item: 'NodeProto'
 
-    if isinstance(value, BaseNode):
+    if isinstance(
+        value, BaseNode
+    ):  # LS comment: ：如果是，直接调用该对象的_to_node_protobuf()方法进行转换。这是因为BaseNode及其子类已经实现了将自身转换为NodeProto的逻辑。
         nested_item = value._to_node_protobuf()
         return nested_item
 
+    # LS comment: 特定数据类型，先转换为BaseNode，再调用_to_node_protobuf()方法进行转换
     base_node_wrap: BaseNode
     if torch is not None:
         if isinstance(value, torch.Tensor):
@@ -87,11 +92,12 @@ def _type_to_protobuf(value: Any) -> 'NodeProto':
         base_node_wrap = NdArray._docarray_from_native(value)
         return base_node_wrap._to_node_protobuf()
 
+    # LS comment: 基本数据类型，直接创建一个NodeProto实例，并设置相应的字段
     for basic_type, key_name in basic_type_to_key.items():
         if isinstance(value, basic_type):
             nested_item = NodeProto(**{key_name: value})
             return nested_item
-
+    # LS comment: 容器类型，递归调用_type_to_protobuf()方法，将容器中的每个元素转换为NodeProto，然后添加到一个新的NodeProto实例中
     for container_type, key_name in container_type_to_key.items():
         if isinstance(value, container_type):
             from docarray.proto import ListOfAnyProto
@@ -101,7 +107,7 @@ def _type_to_protobuf(value: Any) -> 'NodeProto':
                 lvalue.data.append(_type_to_protobuf(item))
             nested_item = NodeProto(**{key_name: lvalue})
             return nested_item
-
+    # LS comment: 字典类型，创建一个DictOfAnyProto实例来存储转换后的键值对。遍历字典中的每个键值对，将值通过_type_to_protobuf转换，然后将转换后的结果存储。注意，Protobuf只支持字符串类型的键。
     if isinstance(value, dict):
         from docarray.proto import DictOfAnyProto
 
@@ -118,15 +124,18 @@ def _type_to_protobuf(value: Any) -> 'NodeProto':
         struct = DictOfAnyProto(data=data)
         nested_item = NodeProto(dict=struct)
         return nested_item
-
+    # LS comment: None类型，直接创建一个空的NodeProto实例
     elif value is None:
         nested_item = NodeProto()
         return nested_item
-    else:
+    else:  # LS comment: 异常处理
         raise ValueError(f'{type(value)} is not supported with protobuf')
 
 
-class IOMixin(Iterable[Tuple[str, Any]]):
+class IOMixin(
+    Iterable[Tuple[str, Any]]
+):  # LS comment: 继承了没有实现__iter__方法，因为BaseDocWithoutId继承的BaseModel（pydantic）实现了
+    # 没有to_json方法，因为BaseDocWithoutId继承的BaseModel（pydantic）实现了json方法
     """
     IOMixin to define all the bytes/protobuf/json related part of BaseDoc
     """
@@ -138,8 +147,7 @@ class IOMixin(Iterable[Tuple[str, Any]]):
 
     @classmethod
     @abstractmethod
-    def _get_field_annotation(cls, field: str) -> Type:
-        ...
+    def _get_field_annotation(cls, field: str) -> Type: ...
 
     @classmethod
     def _get_field_annotation_array(cls, field: str) -> Type:

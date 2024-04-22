@@ -32,8 +32,7 @@ class PushPullMixin(Iterable['BaseDoc']):
     doc_type: Type['BaseDoc']
 
     @abstractmethod
-    def __len__(self) -> int:
-        ...
+    def __len__(self) -> int: ...
 
     @staticmethod
     def resolve_url(url: str) -> Tuple[PUSH_PULL_PROTOCOL, str]:
@@ -132,7 +131,9 @@ class PushPullMixin(Iterable['BaseDoc']):
             )
 
         logging.info(f'Pulling {url}')
-        protocol, name = cls.resolve_url(url)
+        protocol, name = cls.resolve_url(
+            url
+        )  #  LS comment:通过://分割url，得到协议和name
         return cls.get_pushpull_backend(protocol).pull(
             cls, name, show_progress, local_cache  # type: ignore
         )

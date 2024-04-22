@@ -246,12 +246,12 @@ class DocVec(IOMixinDocVec, AnyDocArray[T_doc]):  # type: ignore
                         tensor_columns[field_name] = field_type._docarray_from_native(
                             field_type.get_comp_backend().empty(
                                 column_shape,
-                                dtype=tensor.dtype
-                                if hasattr(tensor, 'dtype')
-                                else None,
-                                device=tensor.device
-                                if hasattr(tensor, 'device')
-                                else None,
+                                dtype=(
+                                    tensor.dtype if hasattr(tensor, 'dtype') else None
+                                ),
+                                device=(
+                                    tensor.device if hasattr(tensor, 'device') else None
+                                ),
                             )
                         )
 
@@ -351,9 +351,9 @@ class DocVec(IOMixinDocVec, AnyDocArray[T_doc]):  # type: ignore
         """
         for field, col_tens in self._storage.tensor_columns.items():
             if col_tens is not None:
-                self._storage.tensor_columns[
-                    field
-                ] = col_tens.get_comp_backend().to_device(col_tens, device)
+                self._storage.tensor_columns[field] = (
+                    col_tens.get_comp_backend().to_device(col_tens, device)
+                )
 
         for field, col_doc in self._storage.doc_columns.items():
             if col_doc is not None:
@@ -370,12 +370,10 @@ class DocVec(IOMixinDocVec, AnyDocArray[T_doc]):  # type: ignore
     ################################################
 
     @overload
-    def __getitem__(self: T, item: int) -> T_doc:
-        ...
+    def __getitem__(self: T, item: int) -> T_doc: ...
 
     @overload
-    def __getitem__(self: T, item: IndexIterType) -> T:
-        ...
+    def __getitem__(self: T, item: IndexIterType) -> T: ...
 
     def __getitem__(self: T, item: Union[int, IndexIterType]) -> Union[T_doc, T]:
         if item is None:
@@ -410,12 +408,10 @@ class DocVec(IOMixinDocVec, AnyDocArray[T_doc]):  # type: ignore
     ####################################
 
     @overload
-    def __setitem__(self: T, key: int, value: T_doc):
-        ...
+    def __setitem__(self: T, key: int, value: T_doc): ...
 
     @overload
-    def __setitem__(self: T, key: IndexIterType, value: T):
-        ...
+    def __setitem__(self: T, key: IndexIterType, value: T): ...
 
     @no_type_check
     def __setitem__(self: T, key, value):
@@ -661,6 +657,7 @@ class DocVec(IOMixinDocVec, AnyDocArray[T_doc]):  # type: ignore
     def __class_getitem__(cls, item: Union[Type[BaseDoc], TypeVar, str]):
         # call implementation in AnyDocArray
         return super(IOMixinDocVec, cls).__class_getitem__(item)
+        # LS comments: 在多继承的情况下，Python使用一种称为C3线性化的算法来确定MRO。这个算法的目的是保持基类的调用顺序，并且在可能的情况下，保持继承的左到右的顺序。当你调用super(IOMixinDocVec, cls)时，你实际上是在告诉Python："在cls的MRO中，找到IOMixinDocVec之后的那个类，并从那个类开始继续往上找__class_getitem__方法"。如果IOMixinDocVec和AnyDocArray是平级的，这意味着它们是被同一个子类同时继承。在这种情况下，根据MRO，super(IOMixinDocVec, cls)实际上是在查找位于IOMixinDocVec之后的类中的方法，这通常意味着是AnyDocArray或者是更上层的基类（如果AnyDocArray位于IOMixinDocVec之后的话）。
 
     if is_pydantic_v2:
 
